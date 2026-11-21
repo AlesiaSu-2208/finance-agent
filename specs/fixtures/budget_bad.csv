@@ -1,1 +1,8 @@
 type,category,amount
+limit,Zakupy spożywcze,1500
+limit,Jedzenie,500
+limit,Kawiarnie i restauracje,dużo
+limit,Transport,-100
+limit,Przelewy,1000
+savings_goal,,1000
+savings_goal,,2000
