@@ -1,0 +1,5 @@
+# Служебные файлы Claude и macOS — не публикуем
+.claude/
+.DS_Store
+__pycache__/
+*.pyc
