@@ -1,0 +1,8 @@
+type,category,amount
+limit,Zakupy spożywcze,1700
+limit,Kawiarnie i restauracje,600
+limit,Transport,300
+limit,Zakupy,600
+limit,Uroda i drogeria,350
+limit,Rozrywka,150
+savings_goal,,1000
