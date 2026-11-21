@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finanse z karty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* Стиль «аристократичный»: пергамент, золото, бордо, изумруд и сапфир; антиква Cormorant Garamond + EB Garamond */
+:root {
+  color-scheme: light;
+  --bg: #F3ECDD;
+  --bg-2: #EADFC8;
+  --surface: #FBF7EE;
+  --text: #1F1A17;
+  --text-2: #5C5246;
+  --line: #DDCFB4;
+  --track: #EDE3CF;
+  --gold: #A8833F;
+  --gold-soft: #CDB27A;
+  --gold-text: #7A5A22;
+  --income: #22335C;
+  --expense: #7A2232;
+  --savings: #1F5A46;
+  --good: #1F5A46;
+  --bad: #8E2433;
+  --good-text: #1F5A46;
+  --bad-text: #8E2433;
+  --budget-ok: #8C8576;
+  --budget-warn: #B8862B;
+  --budget-over: #8E2433;
+  --shadow: 0 1px 2px rgba(70, 48, 14, .06), 0 14px 30px -18px rgba(70, 48, 14, .35);
+  --display: "Cormorant Garamond", "Cormorant", Garamond, "Times New Roman", Georgia, serif;
+  --serif: "EB Garamond", Garamond, Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0E1322;
+    --bg-2: #141B30;
+    --surface: #161C30;
+    --text: #EDE6D6;
+    --text-2: #B7AD99;
+    --line: #2E3653;
+    --track: #20283F;
+    --gold: #C9A96A;
+    --gold-soft: #8C7748;
+  --gold-text: #C9A96A;
+    --income: #8EA3D6;
+    --expense: #D9858F;
+    --savings: #6FB79A;
+    --good: #6FB79A;
+    --bad: #E07A84;
+    --good-text: #7CC4A6;
+    --bad-text: #F09AA2;
+    --budget-ok: #8A90A6;
+    --budget-warn: #D6AE5C;
+    --budget-over: #E07A84;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 16px 34px -20px rgba(0, 0, 0, .8);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1322;
+  --bg-2: #141B30;
+  --surface: #161C30;
+  --text: #EDE6D6;
+  --text-2: #B7AD99;
+  --line: #2E3653;
+  --track: #20283F;
+  --gold: #C9A96A;
+  --gold-soft: #8C7748;
+  --gold-text: #C9A96A;
+  --income: #8EA3D6;
+  --expense: #D9858F;
+  --savings: #6FB79A;
+  --good: #6FB79A;
+  --bad: #E07A84;
+  --good-text: #7CC4A6;
+  --bad-text: #F09AA2;
+  --budget-ok: #8A90A6;
+  --budget-warn: #D6AE5C;
+  --budget-over: #E07A84;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 16px 34px -20px rgba(0, 0, 0, .8);
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; color: var(--text); min-height: 100vh;
+  font: 16.5px/1.5 var(--serif);
+  font-variant-numeric: lining-nums;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 90% 50% at 50% -5%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 70%),
+    radial-gradient(ellipse 70% 60% at 100% 100%, color-mix(in srgb, var(--bg-2) 80%, transparent), transparent 70%),
+    repeating-linear-gradient(45deg, color-mix(in srgb, var(--gold) 4%, transparent) 0 1px, transparent 1px 7px);
+  background-attachment: fixed;
+}
+.num, .kpi .value, td.num, .money { font-variant-numeric: tabular-nums lining-nums; }
+code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .86em; }
+main { max-width: 1180px; margin: 0 auto; padding: 40px 24px 64px; }
+
+/* Шапка: по центру, капитель, орнамент */
+header { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; margin-bottom: 6px; }
+header .eyebrow { font-family: var(--display); font-size: 14px; letter-spacing: .32em; text-transform: uppercase; color: var(--gold-text); font-weight: 600; }
+header h1 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 46px; line-height: 1.05; letter-spacing: .01em; }
+header p { margin: 0; color: var(--text-2); font-size: 15px; font-style: italic; }
+.ornament { display: flex; align-items: center; gap: 14px; margin: 14px auto 22px; max-width: 420px; color: var(--gold); }
+.ornament::before, .ornament::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); }
+.ornament::after { background: linear-gradient(90deg, var(--gold), transparent); }
+.ornament span { font-size: 16px; line-height: 1; }
+
+/* Рамка «паспарту»: золотая линия + внутренняя тонкая линия */
+.card, .kpi, .period, .total, .cmp-tile {
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  box-shadow: inset 0 0 0 4px var(--surface), inset 0 0 0 5px color-mix(in srgb, var(--gold) 22%, transparent), var(--shadow);
+  border-radius: 4px;
+}
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.kpi { --accent: var(--income); padding: 20px 22px 18px; min-width: 0; position: relative; }
+.kpi::before { content: ""; position: absolute; left: 22px; right: 22px; top: 0; height: 2px; background: var(--accent); opacity: .85; }
+.label { font-size: 13px; font-weight: 600; color: var(--text-2); letter-spacing: .14em; text-transform: uppercase; }
+.kpi .label { display: flex; align-items: center; gap: 8px; }
+.kpi .label i, .cmp-tile .label i { width: 8px; height: 8px; transform: rotate(45deg); background: var(--accent); flex: none; }
+.kpi .value { font-family: var(--display); font-size: 46px; font-weight: 600; line-height: 1.1; margin: 8px 0 4px; white-space: nowrap; }
+.kpi .delta { font-size: 14px; color: var(--text-2); }
+.kpi .delta b { font-weight: 600; }
+.good { color: var(--good-text); } .bad { color: var(--bad-text); } .flat { color: var(--text-2); }
+.goal-line { margin-top: 4px; }
+
+.period { margin: 18px 0 28px; padding: 12px 22px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 28px; font-size: 15px; color: var(--text-2); }
+.period > span:first-child { font-style: italic; }
+.period b { color: var(--text); font-weight: 600; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.grid + .grid { margin-top: 26px; }
+.card { padding: 26px 28px 22px; min-width: 0; }
+.span2 { grid-column: 1 / -1; }
+.card h2 { margin: 0 0 4px; font-family: var(--display); font-size: 27px; font-weight: 600; letter-spacing: .01em; line-height: 1.15; }
+.card h2::after { content: ""; display: block; width: 56px; height: 1px; margin-top: 8px; background: var(--gold); }
+.card .sub { margin: 6px 0 18px; color: var(--text-2); font-size: 14.5px; font-style: italic; }
+.hint { padding: 14px 16px; border-radius: 3px; background: var(--track); color: var(--text-2); font-size: 15px; border-left: 2px solid var(--gold); }
+.hint code { color: var(--text); }
+
+/* Куда уходят деньги */
+.cats { display: grid; gap: 14px; }
+.cat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; align-items: baseline; }
+.cat-row .name { display: flex; align-items: center; gap: 9px; font-weight: 500; min-width: 0; }
+.cat-row .name i { flex: none; width: 9px; height: 9px; transform: rotate(45deg); }
+.cat-row .val { font-size: 15px; white-space: nowrap; }
+.cat-row .val b { font-weight: 600; }
+.cat-row .val span { color: var(--text-2); margin-left: 8px; font-style: italic; }
+.cat-row .bar { grid-column: 1 / -1; height: 6px; border-radius: 1px; background: var(--track); overflow: hidden; }
+.cat-row .bar div { height: 100%; }
+
+/* Топ магазинов */
+.shops { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.shops li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.shops li:last-child { border-bottom: 0; }
+.shops .rank { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--surface); box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--gold-soft); }
+.shops .who { min-width: 0; }
+.shops .who div { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shops .who small { color: var(--text-2); font-style: italic; font-size: 14px; }
+.shops .sum { font-weight: 600; white-space: nowrap; }
+
+/* Сравнение месяцев */
+.cmp-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px; }
+.cmp-tile { --accent: var(--income); padding: 16px 18px 14px; min-width: 0; box-shadow: inset 0 0 0 4px var(--surface), inset 0 0 0 5px color-mix(in srgb, var(--gold) 22%, transparent); }
+.cmp-tile .label { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cmp-tile .pair { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin: 6px 0 2px; }
+.cmp-tile .pair b { font-family: var(--display); font-size: 32px; font-weight: 600; line-height: 1.1; white-space: nowrap; }
+.cmp-tile .pair span { color: var(--text-2); font-style: italic; font-size: 14.5px; white-space: nowrap; }
+.cmp-tile .chg { font-size: 14.5px; font-weight: 600; }
+.cmp-legend i.was-key, .cmp-legend i.now-key { background: var(--gold); }
+.cmp-legend i.was-key { opacity: .4; }
+.cmp-table td { vertical-align: middle; }
+.cmp-table td small { font-weight: 400; margin-left: 4px; }
+.cmp-table td .good, .cmp-table td .bad { font-weight: 600; }
+.cmp-table th.bars-col, .cmp-table td.bars-col { width: 34%; }
+.twin { display: grid; gap: 3px; }
+.twin div { height: 6px; min-width: 1px; border-radius: 1px; }
+.twin .was { opacity: .38; }
+.cmp-table tr.sum td { border-top: 1px solid var(--gold-soft); font-weight: 600; padding-top: 12px; }
+
+/* Бюджет */
+.verdict { display: inline-block; margin: 0 0 16px; padding: 5px 16px; border-radius: 2px; font-weight: 600; font-size: 15px; font-family: var(--display); letter-spacing: .04em; font-size: 17px; }
+.verdict.over { background: color-mix(in srgb, var(--budget-over) 13%, transparent); border: 1px solid color-mix(in srgb, var(--budget-over) 40%, transparent); color: var(--text); }
+.verdict.ok { background: color-mix(in srgb, var(--good) 13%, transparent); border: 1px solid color-mix(in srgb, var(--good) 40%, transparent); color: var(--text); }
+.budget { display: grid; gap: 15px; }
+.b-row { display: grid; grid-template-columns: 190px minmax(0, 1fr) 200px; gap: 8px 16px; align-items: center; }
+.b-row .name { font-weight: 600; display: flex; align-items: center; gap: 9px; min-width: 0; }
+.b-row .name i { flex: none; width: 9px; height: 9px; transform: rotate(45deg); }
+.b-row .track { height: 10px; border-radius: 1px; background: var(--track); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.b-row .fill { height: 100%; }
+.b-row .nums { font-size: 15px; text-align: right; white-space: nowrap; }
+.b-row .nums small { display: block; color: var(--text-2); font-size: 14px; font-style: italic; }
+.b-row .nums .over { color: var(--bad-text); font-weight: 600; font-style: normal; }
+.st-ok { background: var(--budget-ok); } .st-warn { background: var(--budget-warn); } .st-over { background: var(--budget-over); }
+.nolimit { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; color: var(--text-2); }
+.nolimit b { color: var(--text); font-weight: 600; }
+.legend { display: flex; gap: 8px 20px; flex-wrap: wrap; font-size: 14px; color: var(--text-2); margin-bottom: 14px; font-style: italic; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 1px; margin-right: 6px; vertical-align: -1px; }
+.legend i.dash { width: 18px; height: 0; border-top: 2px dashed var(--gold); border-radius: 0; vertical-align: 3px; }
+
+/* Таблицы и тепловая карта */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font-weight: 600; color: var(--text-2); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; padding: 8px 10px; border-bottom: 1px solid var(--gold-soft); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th.num, td.num { text-align: right; white-space: nowrap; }
+.heat { border-collapse: separate; border-spacing: 4px; }
+.heat td, .heat th { border: 0; }
+.heat td.cell { text-align: center; font-weight: 600; border-radius: 2px; padding: 10px 6px; min-width: 64px; color: var(--text); cursor: default; }
+.heat td.cell.st-ok { background: color-mix(in srgb, var(--budget-ok) 24%, var(--surface)); }
+.heat td.cell.st-warn { background: color-mix(in srgb, var(--budget-warn) 34%, var(--surface)); }
+.heat td.cell.st-over { background: color-mix(in srgb, var(--budget-over) 30%, var(--surface)); }
+.heat td.rowname { font-weight: 600; white-space: nowrap; padding-left: 0; vertical-align: middle; }
+
+/* Накопления */
+.chart { position: relative; height: 300px; }
+.savings-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 26px; }
+.total { --accent: var(--savings); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); padding: 22px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--accent) 7%, var(--surface)), inset 0 0 0 5px color-mix(in srgb, var(--gold) 22%, transparent); }
+.total .big { font-family: var(--display); font-size: 44px; font-weight: 600; line-height: 1.05; }
+.total .of { color: var(--text-2); font-size: 15px; font-style: italic; }
+.total .track { height: 10px; border-radius: 1px; background: color-mix(in srgb, var(--accent) 16%, var(--surface)); overflow: hidden; }
+.total .fill { height: 100%; background: var(--savings); }
+.total .row { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+.total .row b { font-weight: 600; }
+
+/* Топ-10 */
+td .desc { font-size: 13.5px; color: var(--text-2); font-style: italic; }
+td .tag { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+td .tag i { width: 8px; height: 8px; transform: rotate(45deg); flex: none; }
+td.muted, .muted { color: var(--text-2); white-space: nowrap; }
+
+@media (max-width: 820px) {
+  main { padding: 24px 16px 44px; }
+  header h1 { font-size: 32px; }
+  header .eyebrow { font-size: 12px; }
+  .kpis { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .kpi { padding: 16px 14px 13px; }
+  .kpi::before { left: 14px; right: 14px; }
+  .kpi .value { font-size: 32px; }
+  .label { font-size: 11.5px; letter-spacing: .1em; }
+  .grid { grid-template-columns: 1fr; gap: 18px; }
+  .grid + .grid { margin-top: 18px; }
+  .card { padding: 20px 16px 16px; }
+  .card h2 { font-size: 23px; }
+  .savings-grid { grid-template-columns: 1fr; }
+  .b-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .b-row .track { grid-column: 1 / -1; grid-row: 2; }
+  .cmp-tiles { grid-template-columns: 1fr; gap: 10px; }
+  .cmp-tile .pair b { font-size: 27px; }
+}
+.cmp-table th .short { display: none; }
+@media (max-width: 600px) {
+  .cmp-table .bars-col { display: none; }
+  .cmp-table { font-size: 14.5px; }
+  .cmp-table th, .cmp-table td { padding-left: 5px; padding-right: 5px; }
+  .cmp-table th:first-child, .cmp-table td:first-child { padding-left: 0; }
+  .cmp-table th:last-child, .cmp-table td:last-child { padding-right: 0; }
+  .cmp-table th .long { display: none; } .cmp-table th .short { display: inline; }
+  .cmp-table td .tag { white-space: normal; align-items: baseline; }
+  .cmp-table td small { display: block; margin-left: 0; }
+}
+@media (max-width: 400px) {
+  .kpi .value { font-size: 27px; }
+}
+
+/* Фильтры: месяц и категории */
+.filters { position: sticky; top: 0; z-index: 10; margin: 0 -24px 22px; padding: 12px 24px 10px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-top: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); }
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > span { font-size: 12px; font-weight: 600; color: var(--text-2); letter-spacing: .14em; text-transform: uppercase; }
+.field select, .dd-btn { font: inherit; font-size: 15.5px; font-weight: 600; color: var(--text); background-color: var(--surface);
+  border: 1px solid var(--gold-soft); border-radius: 3px; padding: 7px 36px 7px 12px; min-width: 190px; max-width: 100%; cursor: pointer;
+  appearance: none; -webkit-appearance: none; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: inset 0 0 0 2px var(--surface), inset 0 0 0 3px color-mix(in srgb, var(--gold) 18%, transparent);
+  background-image: linear-gradient(45deg, transparent 50%, var(--gold) 50%), linear-gradient(135deg, var(--gold) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+.field select:hover, .dd-btn:hover { border-color: var(--gold); }
+.field select:focus-visible, .dd-btn:focus-visible, .dd-panel button:focus-visible, .dd-panel input:focus-visible {
+  outline: 2px solid var(--gold); outline-offset: 2px; }
+.dd { position: relative; }
+.dd-btn { min-width: 240px; }
+.dd-btn[aria-expanded="true"] { border-color: var(--gold); }
+.dd-panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: max(100%, 300px); max-height: min(70vh, 470px); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--gold-soft); border-radius: 3px; padding: 8px; box-shadow: 0 16px 36px -10px rgba(40, 26, 6, .35); }
+.dd-actions { display: flex; justify-content: space-between; gap: 8px; padding: 4px 6px 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.dd-actions button { font: inherit; font-size: 14px; font-weight: 600; font-style: italic; background: none; border: 0; padding: 4px 2px; color: var(--text); text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 3px; cursor: pointer; }
+.dd-panel fieldset { border: 0; margin: 0; padding: 0; }
+.dd-panel label { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 2px; font-size: 15px; cursor: pointer; }
+.dd-panel label:hover { background: var(--track); }
+.dd-panel input { width: 16px; height: 16px; margin: 0; accent-color: var(--expense); flex: none; }
+.dd-panel label i { width: 9px; height: 9px; transform: rotate(45deg); flex: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.f-foot { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-2); font-style: italic; margin-left: auto; padding-bottom: 8px; }
+.f-reset { font: inherit; font-size: 14px; font-weight: 600; background: none; border: 0; padding: 0; color: var(--text); text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
+.f-reset:focus-visible, .cat-row:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.kpi .scope { font-size: 12px; color: var(--text-2); font-weight: 500; text-transform: none; letter-spacing: 0; font-style: italic; }
+.kpi .label { flex-wrap: wrap; row-gap: 0; }
+button.cat-row { width: 100%; font: inherit; color: inherit; text-align: left; background: none; border: 0; padding: 4px 6px; margin: -4px -6px; border-radius: 2px; cursor: pointer; box-sizing: content-box; }
+button.cat-row:hover { background: var(--track); }
+.cat-row.dim { opacity: .55; }
+.empty { color: var(--text-2); font-size: 15px; padding: 8px 0; font-style: italic; }
+.heat th.sel { color: var(--text); }
+.heat td.sel { box-shadow: inset 0 0 0 2px var(--gold); }
+@media (max-width: 820px) {
+  .filters { position: relative; margin: 0 -16px 18px; padding: 10px 16px 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }   /* на телефоне не прилипает — экономим высоту */
+  .field select, .dd-btn { min-width: 0; width: 100%; }
+  .dd { position: static; }   /* панель категорий — на всю ширину экрана */
+  .dd-panel { left: 16px; right: 16px; width: auto; top: 100%; margin-top: 4px; }   /* под панелью фильтров, на всю ширину */
+  .f-foot { grid-column: 1 / -1; margin-left: 0; padding-bottom: 0; justify-content: space-between; }
+}
+
+/* Выбор файлов и предупреждения о данных */
+.picker { margin-bottom: 24px; }
+.drop { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 28px 16px;
+  border: 1px dashed var(--gold); border-radius: 3px; background: var(--track); cursor: pointer; }
+.drop.over { border-color: var(--income); border-style: solid; }
+.drop { position: relative; }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }   /* системная кнопка — на языке браузера, прячем */
+.drop b { display: inline-block; padding: 9px 22px; border-radius: 2px; background: var(--income); color: var(--surface); margin-bottom: 4px; font-family: var(--display); font-size: 18px; letter-spacing: .04em;
+  box-shadow: inset 0 0 0 2px var(--income), inset 0 0 0 3px var(--gold-soft); }
+.drop:focus-within b { outline: 2px solid var(--gold); outline-offset: 2px; }
+.drop small { color: var(--text-2); font-size: 14px; }
+.warnings { margin-bottom: 24px; padding: 14px 18px; border-radius: 3px; font-size: 15px;
+  background: color-mix(in srgb, var(--budget-warn) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--budget-warn) 45%, transparent); }
+.warnings ul { margin: 8px 0 0; padding-left: 20px; }
+.warnings li { margin: 2px 0; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Rachunek osobisty</div>
+    <h1 id="title">Finanse</h1>
+    <p id="period">Dane fikcyjne</p>
+  </header>
+  <div class="ornament" aria-hidden="true"><span>❖</span></div>
+
+  <section class="card picker" id="picker" hidden>
+    <h2>Wczytaj dane</h2>
+    <p class="sub" id="pickerWhy">Przeglądarka nie pozwala stronie otwartej z dysku samodzielnie czytać plików.</p>
+    <label class="drop" id="drop">
+      <input type="file" id="files" accept=".csv,text/csv" multiple>
+      <b>Wybierz pliki CSV</b> albo przeciągnij je tutaj
+      <small>Z folderu <code>data</code>: <code>statement.csv</code> i <code>rules.csv</code>, opcjonalnie <code>budget.csv</code>. Można zaznaczyć wszystkie naraz.</small>
+    </label>
+    <p class="sub" id="pickerMsg"></p>
+  </section>
+
+  <section class="warnings" id="warnings" hidden></section>
+
+  <div id="app" hidden>
+  <section class="filters" id="filters" aria-label="Filtry">
+    <label class="field">
+      <span>Miesiąc</span>
+      <select id="fMonth"></select>
+    </label>
+    <div class="field dd" id="fCatsDD">
+      <span id="fCatsLabel">Kategorie</span>
+      <button type="button" class="dd-btn" id="fCatsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="fCatsPanel" aria-labelledby="fCatsLabel fCatsBtn"><span id="fCatsText">Wszystkie</span></button>
+      <div class="dd-panel" id="fCatsPanel" hidden>
+        <div class="dd-actions"><button type="button" id="fCatsAll">Zaznacz wszystkie</button><button type="button" id="fCatsNone">Wyczyść</button></div>
+        <fieldset id="fCatsList"><legend class="sr">Kategorie wydatków</legend></fieldset>
+      </div>
+    </div>
+    <div class="f-foot"><span id="fSummary"></span><button type="button" class="f-reset" id="fReset" hidden>Wyczyść filtry</button></div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+  <section class="period" id="periodStrip"></section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Na co idą pieniądze</h2>
+      <p class="sub" id="catSub">Kategorie wydatków, bez przelewów</p>
+      <div class="cats" id="cats"></div>
+    </div>
+    <div class="card">
+      <h2>Top 5 sklepów</h2>
+      <p class="sub" id="shopsSub">Według sumy wydatków, bez przelewów i kosztów stałych</p>
+      <ul class="shops" id="shops"></ul>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card span2">
+      <h2 id="cmpTitle">Porównanie miesięcy</h2>
+      <p class="sub" id="cmpSub"></p>
+      <div id="cmp"></div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card span2">
+      <h2 id="budgetTitle">Budżet</h2>
+      <p class="sub">Wydatki względem miesięcznego limitu z <code>data/budget.csv</code></p>
+      <div id="budget"></div>
+    </div>
+    <div class="card span2">
+      <h2>Budżet według miesięcy</h2>
+      <p class="sub">% limitu w każdym miesiącu. Najedź na komórkę, aby zobaczyć kwoty</p>
+      <div id="heat"></div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card span2">
+      <h2>Oszczędności według miesięcy</h2>
+      <p class="sub">Przychody minus wszystkie obciążenia, łącznie z przelewami</p>
+      <div class="savings-grid">
+        <div>
+          <div class="legend" id="savLegend"></div>
+          <div class="chart"><canvas id="savChart"></canvas></div>
+          <div class="hint" id="goalHint" hidden>Ustaw <code>savings_goal</code> w <code>data/budget.csv</code>, aby zobaczyć cel.</div>
+        </div>
+        <div class="total" id="total"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card span2">
+      <h2>Przychody i wydatki według miesięcy</h2>
+      <p class="sub">Wydatki bez przelewów, zł</p>
+      <div class="legend">
+        <span><i style="background:var(--income)"></i>Przychody</span>
+        <span><i style="background:var(--expense)"></i><span id="mLegendExp">Wydatki</span></span>
+      </div>
+      <div class="chart"><canvas id="monthChart"></canvas></div>
+    </div>
+    <div class="card span2">
+      <h2>Top 10 największych wydatków</h2>
+      <p class="sub" id="topSub">Jednorazowe wydatki, bez przelewów i kosztów stałych</p>
+      <div class="table-wrap"><table id="topTable"></table></div>
+    </div>
+  </section>
+  </div>
+</main>
+
+<script>
+// Дашборд читает данные прямо из CSV рядом со страницей — сборка скриптом не нужна.
+//   data/statement.csv — выписка: date,amount,merchant,description
+//   data/rules.csv     — правила категорий: category,role,keywords (ключевые слова через |)
+//   data/budget.csv    — лимиты и цель: type,category,amount (необязательный)
+// Если страница открыта с диска (file://), браузер не даёт читать файлы — тогда показывается выбор файлов.
+const FILES = { statement: "data/statement.csv", rules: "data/rules.csv", budget: "data/budget.csv" };
+const INCOME = "Przychód", OTHER = "Inne";
+// «Музейная» палитра: бордо, сапфир, охра, изумруд, сливовый, оливковый, терракота, бирюза, пыльная роза, сепия, индиго, горчичный
+const PALETTE_LIGHT = ["#6E1E2B","#24456E","#8F5E10","#2E6B52","#5B2A5E","#5C6A26","#A4502F","#1F6670","#8F4A5C","#6B4E35","#3A3F7A","#7A6610"];
+const PALETTE_DARK  = ["#D08A95","#8FAEDB","#D9A957","#76B898","#B98BBE","#A9B86A","#D98B6A","#6BB5BF","#E0A3B0","#B89878","#9EA3E0","#D1BE5E"];
+const OTHER_COLOR = "#8C8576";
+
+const MONTHS = ["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"];
+const MONTHS_GEN = ["stycznia","lutego","marca","kwietnia","maja","czerwca","lipca","sierpnia","września","października","listopada","grudnia"];
+const MONTHS_SHORT = ["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
+
+const MINUS = "−";
+const NUM = { useGrouping: "always" };   // «1 500 zł», а не «1500 zł» — одинаково во всех строках
+const sign = v => v < 0 ? MINUS : "";
+const zl = v => sign(Math.round(v)) + Math.abs(Math.round(v)).toLocaleString("pl-PL", NUM) + " zł";
+const zlK = v => sign(v) + Math.abs(v).toLocaleString("pl-PL", { ...NUM, minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " zł";
+const pct1 = v => sign(Math.round(v * 10)) + Math.abs(v).toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+const zlShort = v => Math.abs(v) >= 1000 ? sign(v) + (Math.abs(v) / 1000).toLocaleString("pl-PL", { maximumFractionDigits: 1 }) + " tys." : sign(v) + Math.abs(Math.round(v));
+// Польская форма: 1 operacja, 2–4 operacje, 5+ operacji (12–14 — operacji)
+const plForm = (n, one, few, many) => n === 1 ? one : [2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100) ? few : many;
+const mKey = d => d.slice(0, 7);
+const mIdx = k => +k.slice(5) - 1;
+const cap = s => s[0].toUpperCase() + s.slice(1);
+const fmtDate = d => `${d.slice(8)}.${d.slice(5, 7)}.${d.slice(0, 4)}`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const isDark = () => getComputedStyle(document.documentElement).colorScheme === "dark";
+const $ = id => document.getElementById(id);
+
+// ---------- CSV ----------
+// Понимает запятую или точку с запятой (экспорт из Excel), кавычки и переносы строк внутри кавычек.
+// Каждая строка помнит свой номер в файле — для понятных предупреждений.
+function parseCSV(text) {
+  text = text.replace(/^﻿/, "");
+  const first = text.split(/\r?\n/, 1)[0];
+  const delim = (first.split(";").length > first.split(",").length) ? ";" : ",";
+  const out = []; let row = [], field = "", q = false, line = 1, rowLine = 1;
+  const endRow = () => { row.push(field); out.push({ cells: row, line: rowLine }); row = []; field = ""; };
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+      else { if (ch === "\n") line++; field += ch; }
+    } else if (ch === '"') q = true;
+    else if (ch === delim) { row.push(field); field = ""; }
+    else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      endRow(); line++; rowLine = line;
+    } else field += ch;
+  }
+  if (field !== "" || row.length) endRow();
+  const rows = out.filter(r => r.cells.some(c => c.trim() !== ""));
+  const head = rows.shift();
+  const header = head ? head.cells.map(h => h.trim().toLowerCase()) : [];
+  return { header, rows: rows.map(r => ({ line: r.line, ...Object.fromEntries(header.map((h, i) => [h, (r.cells[i] ?? "").trim()])) })) };
+}
+const parseNum = s => {
+  const t = String(s).replace(/zł/gi, "").replace(/[\s ]/g, "");
+  const n = Number(t.includes(",") && !t.includes(".") ? t.replace(",", ".") : t);
+  return t === "" ? NaN : n;
+};
+const kindOf = header => header.includes("keywords") ? "rules"
+  : header.includes("type") && header.includes("amount") ? "budget"
+  : header.includes("date") && header.includes("amount") ? "statement" : null;
+
+// ---------- Данные → модель ----------
+function buildModel(src, warn) {
+  // Правила категорий: порядок строк = приоритет; первое совпадение побеждает
+  const rules = parseCSV(src.rules).rows.map(r => ({
+    line: r.line, category: r.category || "", role: (r.role || "").toLowerCase(),
+    words: (r.keywords || "").split("|").map(w => w.trim().toLowerCase()).filter(Boolean),
+  })).filter(r => {
+    if (!r.category) { warn(`rules.csv, wiersz ${r.line}: brak nazwy kategorii — pominięto`); return false; }
+    if (!r.words.length) warn(`rules.csv, wiersz ${r.line}: kategoria «${r.category}» nie ma słów kluczowych`);
+    return true;
+  });
+  const transfers = new Set(rules.filter(r => r.role === "transfer").map(r => r.category));
+  const fixed = new Set(rules.filter(r => r.role === "fixed").map(r => r.category));
+  const catOrder = [...new Set(rules.filter(r => !transfers.has(r.category)).map(r => r.category))];
+  const categorize = (amount, merchant, desc) => {
+    if (amount > 0) return INCOME;
+    const text = `${merchant} ${desc}`.toLowerCase();
+    const hit = rules.find(r => r.words.some(w => text.includes(w)));
+    return hit ? hit.category : OTHER;
+  };
+
+  // Выписка
+  const TX = [];
+  for (const r of parseCSV(src.statement).rows) {
+    const a = parseNum(r.amount);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || "")) { warn(`statement.csv, wiersz ${r.line}: data «${r.date || ""}» nie ma formatu RRRR-MM-DD — pominięto`); continue; }
+    if (!Number.isFinite(a) || a === 0) { warn(`statement.csv, wiersz ${r.line}: kwota «${r.amount || ""}» nie jest liczbą — pominięto`); continue; }
+    TX.push({ d: r.date, a, m: r.merchant || "—", s: r.description || "", c: categorize(a, r.merchant || "", r.description || "") });
+  }
+  TX.sort((x, y) => x.d < y.d ? -1 : x.d > y.d ? 1 : 0);
+
+  // Бюджет (необязательный)
+  let BUDGET = null;
+  if (src.budget != null) {
+    const expenseCats = new Set([...catOrder, OTHER]);
+    const limits = {}, limitLine = {}; let goal = null, goalLine = null;
+    const skip = (n, msg) => warn(`budget.csv, wiersz ${n}: ${msg} — pominięto`);
+    for (const r of parseCSV(src.budget).rows) {
+      const type = r.type || "", cat = r.category || "", raw = r.amount || "", n = r.line;
+      if (type !== "limit" && type !== "savings_goal") { skip(n, `nieznany typ «${type}» (dozwolone: limit, savings_goal)`); continue; }
+      if (type === "limit") {
+        if (cat === INCOME || transfers.has(cat)) { skip(n, `dla «${cat}» nie ustawia się limitu`); continue; }
+        if (!expenseCats.has(cat)) { skip(n, `nieznana kategoria «${cat}»`); continue; }
+      }
+      const amount = parseNum(raw);
+      if (!Number.isFinite(amount)) { skip(n, `kwota «${raw}» nie jest liczbą`); continue; }
+      if (amount <= 0) { skip(n, "kwota musi być większa od 0"); continue; }
+      if (type === "limit") {
+        if (cat in limits) { skip(n, `limit dla «${cat}» ustawiono już w wierszu ${limitLine[cat]}`); continue; }
+        limits[cat] = amount; limitLine[cat] = n;
+      } else {
+        if (goal !== null) { skip(n, `cel oszczędności ustawiono już w wierszu ${goalLine}`); continue; }
+        goal = amount; goalLine = n;
+      }
+    }
+    BUDGET = { limits, goal };
+  }
+  return { TX, BUDGET, transfers, fixed, catOrder };
+}
+
+// ---------- Отрисовка ----------
+const CHARTS = [];   // живые графики Chart.js — уничтожаются перед каждой перерисовкой, даже если start() вызвали повторно
+// Фильтры: state.month — "ГГГГ-ММ" или "all" (весь период); state.cats — выбранные категории (пусто = все).
+// Месяц влияет на KPI, категории, бюджет, топ-5 и топ-10; на графиках и в тепловой карте выбранный месяц выделяется.
+// Категории сужают только расходы: доход и накопления от категорий не зависят.
+function start(src) {
+  const warnings = [];
+  const warn = msg => { warnings.push(msg); console.warn(msg); };
+  const { TX, BUDGET, transfers, fixed, catOrder } = buildModel(src, warn);
+  const box = $("warnings");
+  if (warnings.length) {
+    box.innerHTML = `<b>Uwagi do danych (${warnings.length})</b><ul>${warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+    box.hidden = false;
+  } else box.hidden = true;
+  if (!TX.length) {
+    box.innerHTML = `<b>Brak operacji do pokazania.</b> Sprawdź plik <code>data/statement.csv</code>.` + (warnings.length ? box.innerHTML : "");
+    box.hidden = false; return;
+  }
+  $("picker").hidden = true;
+  $("app").hidden = false;
+
+  const catColor = c => { const i = catOrder.indexOf(c); return i < 0 ? OTHER_COLOR : (isDark() ? PALETTE_DARK : PALETTE_LIGHT)[i % PALETTE_LIGHT.length]; };
+  const sw = c => `<i style="background:${catColor(c)}"></i>`;
+
+  // ----- Базовые агрегаты (без фильтров) -----
+  const months = [...new Set(TX.map(t => mKey(t.d)))].sort();
+  const cur = months[months.length - 1];
+  const yearOf = k => k.slice(0, 4);
+  const isSpend = t => t.a < 0 && !transfers.has(t.c);          // расходы — без переводов
+  const spendCats = [...catOrder, OTHER].filter(c => TX.some(t => isSpend(t) && t.c === c));
+  const summary = rows => {
+    const income = rows.filter(t => t.a > 0).reduce((s, t) => s + t.a, 0);
+    const spend = rows.filter(isSpend).reduce((s, t) => s - t.a, 0);
+    const out = rows.filter(t => t.a < 0).reduce((s, t) => s - t.a, 0);
+    const saved = income - out;
+    return { income, spend, saved, rate: income ? saved / income * 100 : 0 };
+  };
+  const scope = m => m === "all" ? TX : TX.filter(t => mKey(t.d) === m);
+  const byMonth = Object.fromEntries(months.map(m => [m, summary(scope(m))]));
+  const all = summary(TX);
+  const goal = BUDGET && BUDGET.goal ? BUDGET.goal : null;
+  const limits = BUDGET ? BUDGET.limits : {};
+  const limitCats = Object.keys(limits);
+
+  // ----- Состояние фильтров (хранится в адресе: #m=2026-09&c=Zakupy|Transport) -----
+  const state = { month: cur, cats: new Set() };
+  const readHash = () => {
+    const p = new URLSearchParams(location.hash.slice(1));
+    const m = p.get("m");
+    state.month = m === "all" || months.includes(m) ? m : cur;
+    state.cats = new Set((p.get("c") || "").split("|").filter(c => spendCats.includes(c)));
+  };
+  const writeHash = () => {
+    const p = new URLSearchParams();
+    if (state.month !== cur) p.set("m", state.month);
+    if (state.cats.size) p.set("c", [...state.cats].join("|"));
+    const h = p.toString();
+    try { history.replaceState(null, "", h ? "#" + h : location.pathname + location.search); } catch (e) { /* file:// в некоторых браузерах */ }
+  };
+  const setState = patch => { Object.assign(state, patch); writeHash(); renderAll(); };
+  readHash();
+
+  const catOk = c => !state.cats.size || state.cats.has(c);
+  const inM = (t, m) => m === "all" || mKey(t.d) === m;
+  const spendIn = m => TX.filter(t => isSpend(t) && inM(t, m) && catOk(t.c));
+  const total = rows => rows.reduce((s, t) => s - t.a, 0);
+  const mName = m => m === "all" ? "cały okres" : `${MONTHS[mIdx(m)]} ${yearOf(m)}`;
+  const nMonths = m => m === "all" ? months.length : 1;
+  const catsLabel = () => !state.cats.size ? "wszystkie kategorie"
+    : state.cats.size === 1 ? [...state.cats][0]
+    : `${state.cats.size} ${plForm(state.cats.size, "kategoria", "kategorie", "kategorii")}`;
+  const scopeText = () => `${state.month === "all" ? "za cały okres" : "· " + mName(state.month)}${state.cats.size ? " · " + catsLabel() : ""}`;
+
+  // ----- Панель фильтров: выпадающий список месяца и выпадающий список категорий с галочками -----
+  const fMonth = $("fMonth"), ddBtn = $("fCatsBtn"), ddPanel = $("fCatsPanel"), ddList = $("fCatsList");
+  const oneYear = yearOf(months[0]) === yearOf(cur);   // год в списке нужен, только если данные за разные годы
+  fMonth.innerHTML = ["all", ...months].map(m => `<option value="${m}">${m === "all" ? "Cały okres" : cap(MONTHS[mIdx(m)]) + (oneYear ? "" : " " + yearOf(m))}</option>`).join("");
+  ddList.innerHTML = `<legend class="sr">Kategorie wydatków</legend>` + spendCats.map(c =>
+    `<label><input type="checkbox" value="${esc(c)}">${sw(c)}<span>${esc(c)}</span></label>`).join("");
+  const boxes = [...ddList.querySelectorAll("input")];
+  function renderFilters() {
+    fMonth.value = state.month;
+    boxes.forEach(b => { b.checked = !state.cats.size || state.cats.has(b.value); });   // пусто = все отмечены
+    $("fCatsText").textContent = state.cats.size ? catsLabel() : "Wszystkie";
+    $("fReset").hidden = !(state.month !== cur || state.cats.size);
+    $("fSummary").textContent = `Pokazano: ${mName(state.month)} · ${catsLabel()}`;
+  }
+  fMonth.onchange = () => setState({ month: fMonth.value });
+  ddList.onchange = () => {
+    const picked = boxes.filter(b => b.checked).map(b => b.value);
+    // все отмечены или ни одной — значит «все категории»
+    setState({ cats: new Set(picked.length === boxes.length ? [] : picked) });
+    if (!picked.length) boxes.forEach(b => { b.checked = false; });   // «Wyczyść» оставляет пустые галочки, пока панель открыта
+  };
+  $("fCatsAll").onclick = () => setState({ cats: new Set() });
+  $("fCatsNone").onclick = () => { setState({ cats: new Set() }); boxes.forEach(b => { b.checked = false; }); };
+  const openDD = open => {
+    ddPanel.hidden = !open; ddBtn.setAttribute("aria-expanded", String(open));
+    if (open) (boxes.find(b => b.checked) || boxes[0])?.focus();
+  };
+  ddBtn.onclick = () => openDD(ddPanel.hidden);
+  if (!start.ddHooked) {   // закрытие по клику мимо и по Escape — вешаем один раз
+    document.addEventListener("click", e => { if (!$("fCatsDD").contains(e.target)) { $("fCatsPanel").hidden = true; $("fCatsBtn").setAttribute("aria-expanded", "false"); } });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("fCatsPanel").hidden) { $("fCatsPanel").hidden = true; $("fCatsBtn").setAttribute("aria-expanded", "false"); $("fCatsBtn").focus(); } });
+    start.ddHooked = true;
+  }
+  $("fReset").onclick = () => setState({ month: cur, cats: new Set() });
+  const toggleCat = c => { const cats = new Set(state.cats); cats.has(c) ? cats.delete(c) : cats.add(c); setState({ cats }); };
+
+  // ----- Шапка и KPI -----
+  function renderHead() {
+    const m = state.month, isAll = m === "all";
+    $("title").textContent = `Finanse · ${mName(m)}`;
+    $("period").textContent =
+      `dane: ${MONTHS[mIdx(months[0])]} ${yearOf(months[0]) !== yearOf(cur) ? yearOf(months[0]) + " " : ""}– ${MONTHS[mIdx(cur)]} ${yearOf(cur)} · ${TX.length} ${plForm(TX.length, "operacja", "operacje", "operacji")} · dane fikcyjne`;
+
+    const C = summary(scope(m));
+    const spend = total(spendIn(m));
+    const prev = isAll ? null : months[months.indexOf(m) - 1] || null;
+    const P = prev ? summary(scope(prev)) : null;
+    const prevSpend = prev ? total(spendIn(prev)) : 0;
+    const deltaHtml = (d, higherIsGood, unit) => {
+      if (!prev) return isAll ? `<span class="scope">suma za ${months.length} mies.</span>` : `<span class="scope">brak poprzedniego miesiąca</span>`;
+      const toWhat = ` względem ${MONTHS_GEN[mIdx(prev)]}`;
+      const fmt = unit === "pp"
+        ? v => Math.abs(v).toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " p.p."
+        : v => zl(Math.abs(v));
+      if (Math.abs(d) < (unit === "pp" ? 0.05 : 0.5)) return `<b>= 0</b>${toWhat}`;
+      const up = d > 0, good = up === higherIsGood;
+      return `<span class="${good ? "good" : "bad"}"><b>${up ? "▲" : "▼"} ${fmt(d)}</b></span>${toWhat}`;
+    };
+    const g = goal ? goal * nMonths(m) : null;
+    const goalLine = g ? `<div class="goal-line"><span class="${C.saved >= g ? "good" : "bad"}"><b>${C.saved >= g ? "✓ cel osiągnięty" : "✗ cel nieosiągnięty"}</b></span> · cel ${zl(g)}</div>` : "";
+    const spendLabel = state.cats.size ? `Wydatki<span class="scope">(${esc(catsLabel())})</span>` : "Wydatki";
+    $("kpis").innerHTML = [
+      ["Przychody", "--income", zl(C.income), P ? deltaHtml(C.income - P.income, true) : deltaHtml(0, true)],
+      [spendLabel, "--expense", zl(spend), P ? deltaHtml(spend - prevSpend, false) : deltaHtml(0, false)],
+      ["Oszczędności", "--savings", zl(C.saved), (P ? deltaHtml(C.saved - P.saved, true) : deltaHtml(0, true)) + goalLine],
+      ["Stopa oszczędności", "--savings", pct1(C.rate), P ? deltaHtml(C.rate - P.rate, true, "pp") : deltaHtml(0, true, "pp")],
+    ].map(([l, v, val, d]) => `<div class="kpi" style="--accent:var(${v})">
+        <div class="label"><i></i>${l}</div><div class="value">${val}</div><div class="delta">${d}</div></div>`).join("");
+    $("periodStrip").innerHTML =
+      `<span>Za cały okres, bez filtrów:</span><span>przychody <b>${zl(all.income)}</b></span><span>wydatki <b>${zl(all.spend)}</b></span>` +
+      `<span>oszczędności <b>${zl(all.saved)}</b></span><span>stopa <b>${pct1(all.rate)}</b></span>`;
+  }
+
+  // ----- Na co idą pieniądze: месяц из фильтра, все категории; невыбранные приглушены, клик = фильтр -----
+  function renderCats() {
+    const m = state.month, totals = {};
+    TX.filter(t => isSpend(t) && inM(t, m)).forEach(t => totals[t.c] = (totals[t.c] || 0) - t.a);
+    const cats = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+    const sumAll = cats.reduce((s, c) => s + totals[c], 0) || 1;
+    const max = totals[cats[0]] || 1;
+    $("catSub").textContent = `${cap(mName(m))}, bez przelewów. Kliknij kategorię, aby ją filtrować.`;
+    $("cats").innerHTML = cats.length ? cats.map(c => `
+      <button type="button" class="cat-row${catOk(c) ? "" : " dim"}" data-cat="${esc(c)}" aria-pressed="${state.cats.has(c)}">
+        <div class="name">${sw(c)}${esc(c)}</div>
+        <div class="val money"><b>${zl(totals[c])}</b><span>${pct1(totals[c] / sumAll * 100)}</span></div>
+        <div class="bar"><div style="width:${totals[c] / max * 100}%;background:${catColor(c)}"></div></div>
+      </button>`).join("") : `<div class="empty">Brak wydatków w tym okresie.</div>`;
+  }
+  $("cats").onclick = e => { const b = e.target.closest("[data-cat]"); if (b) toggleCat(b.dataset.cat); };
+
+  function renderShops() {
+    const shops = {};
+    spendIn(state.month).filter(t => !fixed.has(t.c)).forEach(t => {
+      const s = shops[t.m] || (shops[t.m] = { sum: 0, n: 0, c: t.c });
+      s.sum -= t.a; s.n += 1;
+    });
+    const top = Object.entries(shops).sort((a, b) => b[1].sum - a[1].sum).slice(0, 5);
+    $("shopsSub").textContent = `Według sumy wydatków ${scopeText()}, bez przelewów i kosztów stałych`;
+    $("shops").innerHTML = top.length ? top.map(([m, s], i) => `
+      <li><span class="rank" style="background:${catColor(s.c)}">${i + 1}</span>
+        <span class="who"><div>${esc(m)}</div><small>${esc(s.c)} · ${s.n} ${plForm(s.n, "operacja", "operacje", "operacji")}</small></span>
+        <span class="sum money">${zl(s.sum)}</span></li>`).join("") : `<li class="empty">Brak wydatków dla wybranych filtrów.</li>`;
+  }
+
+  // ----- Porównanie miesięcy: выбранный месяц против предыдущего; при «Cały okres» — два последних месяца -----
+  // Фильтр категорий сужает расходы и строки таблицы; доход и накопления от категорий не зависят.
+  function renderCompare() {
+    const el = $("cmp"), isAll = state.month === "all";
+    const b = isAll ? cur : state.month, a = months[months.indexOf(b) - 1];
+    const label = k => cap(MONTHS[mIdx(k)]) + (oneYear ? "" : " " + yearOf(k));
+    if (!a) {
+      $("cmpTitle").textContent = "Porównanie miesięcy";
+      $("cmpSub").textContent = "";
+      el.innerHTML = `<div class="hint">Brak poprzedniego miesiąca do porównania — ${esc(mName(b))} to pierwszy miesiąc w danych.</div>`;
+      return;
+    }
+    $("cmpTitle").textContent = `${label(b)} vs ${label(a).toLowerCase()}`;
+    $("cmpSub").textContent = (b === cur ? "Dwa ostatnie miesiące danych" : "Wybrany miesiąc względem poprzedniego") +
+      (state.cats.size ? ` · ${catsLabel()}` : "") + ". Wydatki bez przelewów.";
+    const A = summary(scope(a)), B = summary(scope(b));
+    const dPct = (x, y) => x > 0 ? ` (${y >= x ? "+" : MINUS}${Math.abs((y - x) / x * 100).toLocaleString("pl-PL", { maximumFractionDigits: 0 })}%)` : "";
+    const change = (x, y, higherIsGood, withPct = true) => {
+      const d = y - x;
+      if (Math.abs(d) < 0.5) return `<span class="flat">= bez zmian</span>`;
+      const good = (d > 0) === higherIsGood;
+      return `<span class="${good ? "good" : "bad"}">${d > 0 ? "▲" : "▼"} ${zl(Math.abs(d))}${withPct ? `<small>${dPct(x, y)}</small>` : ""}</span>`;
+    };
+    const spendA = total(spendIn(a)), spendB = total(spendIn(b));
+    const tiles = [
+      ["Przychody", "--income", A.income, B.income, true, true],
+      [state.cats.size ? `Wydatki · ${esc(catsLabel())}` : "Wydatki", "--expense", spendA, spendB, false, true],
+      ["Oszczędności", "--savings", A.saved, B.saved, true, false],
+    ].map(([l, v, x, y, hi, wp]) => `<div class="cmp-tile" style="--accent:var(${v})">
+        <div class="label"><i></i>${l}</div>
+        <div class="pair money"><b>${zl(y)}</b><span>było ${zl(x)}</span></div>
+        <div class="chg money">${change(x, y, hi, wp)}</div></div>`).join("");
+
+    const sumOf = (m, c) => TX.filter(t => isSpend(t) && t.c === c && mKey(t.d) === m).reduce((s, t) => s - t.a, 0);
+    const rows = spendCats.filter(catOk).map(c => ({ c, x: sumOf(a, c), y: sumOf(b, c) }))
+      .filter(r => r.x > 0 || r.y > 0)
+      .sort((p, q) => Math.abs(q.y - q.x) - Math.abs(p.y - p.x) || q.y - p.y);
+    const max = Math.max(1, ...rows.flatMap(r => [r.x, r.y]));
+    const table = !rows.length ? `<div class="empty">Brak wydatków dla wybranych filtrów.</div>` :
+      `<div class="table-wrap"><table class="cmp-table">
+        <tr><th>Kategoria</th>${[a, b].map(k => `<th class="num"><span class="long">${esc(label(k))}</span><span class="short" aria-hidden="true">${cap(MONTHS_SHORT[mIdx(k)])}</span></th>`).join("")}<th class="num">Zmiana</th><th class="bars-col"><span class="sr">Porównanie</span></th></tr>` +
+      rows.map(r => {
+        const d = r.y - r.x, cls = Math.abs(d) < 0.5 ? "flat" : d > 0 ? "bad" : "good";
+        const pct = cls === "flat" ? "" : r.x > 0 ? dPct(r.x, r.y) : " (nowa)";
+        return `<tr><td><span class="tag">${sw(r.c)}${esc(r.c)}</span></td>
+          <td class="num money muted">${zl(r.x)}</td><td class="num money"><b>${zl(r.y)}</b></td>
+          <td class="num money"><span class="${cls}">${cls === "flat" ? "= 0 zł" : (d > 0 ? "▲ " : "▼ ") + zl(Math.abs(d))}<small>${pct}</small></span></td>
+          <td class="bars-col"><div class="twin" role="img" aria-label="${esc(label(a))}: ${zl(r.x)}, ${esc(label(b))}: ${zl(r.y)}">
+            <div class="was" style="width:${r.x / max * 100}%;background:${catColor(r.c)}"></div>
+            <div class="now" style="width:${r.y / max * 100}%;background:${catColor(r.c)}"></div></div></td></tr>`;
+      }).join("") +
+      `<tr class="sum"><td>Razem</td><td class="num money">${zl(spendA)}</td><td class="num money"><b>${zl(spendB)}</b></td>
+        <td class="num money">${change(spendA, spendB, false)}</td><td class="bars-col"></td></tr></table></div>`;
+    el.innerHTML = `<div class="cmp-tiles">${tiles}</div>` +
+      `<div class="legend cmp-legend"><span><i class="was-key"></i>${esc(label(a))}</span><span><i class="now-key"></i>${esc(label(b))}</span><span>▲ wzrost wydatków · ▼ spadek</span></div>` + table;
+  }
+
+  // ----- Бюджет: за месяц — лимит; за весь период — лимит × число месяцев -----
+  const status = p => p > 100 ? "over" : p >= 80 ? "warn" : "ok";
+  function renderBudget() {
+    const el = $("budget"), m = state.month, k = nMonths(m);
+    $("budgetTitle").textContent = m === "all" ? `Budżet za cały okres (${months.length} mies.)` : `Budżet na ${MONTHS[mIdx(m)]}`;
+    if (!BUDGET || !limitCats.length) {
+      el.innerHTML = `<div class="hint">Dodaj <code>data/budget.csv</code>, aby zobaczyć budżet.</div>`;
+      $("heat").innerHTML = `<div class="hint">Dodaj <code>data/budget.csv</code>, aby zobaczyć budżet według miesięcy.</div>`;
+      return;
+    }
+    const spentOf = c => TX.filter(t => isSpend(t) && t.c === c && inM(t, m)).reduce((s, t) => s - t.a, 0);
+    const rows = limitCats.filter(catOk).map(c => ({ c, spent: spentOf(c), lim: limits[c] * k }))
+      .map(r => ({ ...r, p: r.spent / r.lim * 100 }))
+      .sort((a, b) => b.p - a.p);
+    const free = [...new Set(TX.filter(t => isSpend(t) && inM(t, m) && catOk(t.c)).map(t => t.c))]
+      .filter(c => !(c in limits))
+      .map(c => ({ c, v: spentOf(c) })).sort((a, b) => b.v - a.v);
+    const freeLine = free.length ? `<div class="nolimit">Bez limitu: ${free.map(f => `<b>${esc(f.c)}</b> ${zl(f.v)}`).join(" · ")}</div>` : "";
+    if (!rows.length) {
+      el.innerHTML = `<div class="hint">Wybrane kategorie nie mają limitu w <code>data/budget.csv</code>.</div>` + freeLine;
+    } else {
+      const over = rows.filter(r => r.p > 100).length;
+      const verdict = over
+        ? `<div class="verdict over">Przekroczony budżet w ${over} z ${rows.length} kategorii</div>`
+        : `<div class="verdict ok">${rows.length === 1 ? "Kategoria mieści się" : "Wszystkie kategorie mieszczą się"} w budżecie</div>`;
+      el.innerHTML = verdict +
+        `<div class="legend"><span><i class="st-ok"></i>w normie (&lt; 80%)</span><span><i class="st-warn"></i>blisko limitu (80–100%)</span><span><i class="st-over"></i>przekroczenie (&gt; 100%)</span></div>` +
+        `<div class="budget">` + rows.map(r => {
+          const tail = r.spent > r.lim
+            ? `<small class="over">przekroczenie +${zl(r.spent - r.lim)}</small>`
+            : `<small>zostało ${zl(r.lim - r.spent)} · ${Math.round(r.p)}%</small>`;
+          return `<div class="b-row">
+            <div class="name">${sw(r.c)}${esc(r.c)}</div>
+            <div class="track" role="img" aria-label="${Math.round(r.p)}% limitu"><div class="fill st-${status(r.p)}" style="width:${Math.min(r.p, 100)}%"></div></div>
+            <div class="nums money">${zl(r.spent)} / ${zl(r.lim)}${tail}</div></div>`;
+        }).join("") + `</div>` + freeLine;
+    }
+
+    const heatCats = limitCats.filter(catOk);
+    $("heat").innerHTML = !heatCats.length
+      ? `<div class="hint">Wybrane kategorie nie mają limitu w <code>data/budget.csv</code>.</div>`
+      : `<div class="table-wrap"><table class="heat">
+      <tr><th></th>${months.map(mm => `<th class="num${mm === m ? " sel" : ""}">${cap(MONTHS_SHORT[mIdx(mm)])}</th>`).join("")}</tr>` +
+      heatCats.map(c => `<tr><td class="rowname">${esc(c)}</td>` + months.map(mm => {
+        const v = TX.filter(t => isSpend(t) && t.c === c && mKey(t.d) === mm).reduce((s, t) => s - t.a, 0), p = v / limits[c] * 100;
+        const tip = `${c}, ${MONTHS[mIdx(mm)]}: wydano ${zl(v)} z ${zl(limits[c])}`;
+        return `<td class="cell num st-${status(p)}${mm === m ? " sel" : ""}" title="${esc(tip)}">${Math.round(p)}%</td>`;
+      }).join("") + `</tr>`).join("") + `</table></div>`;
+  }
+
+  // ----- Итог накоплений: всегда за весь период, фильтры не влияют -----
+  function renderTotal() {
+    const el = $("total");
+    const rate = `<div class="row"><span>Średnia stopa oszczędności</span><b class="money">${pct1(all.rate)}</b></div>` +
+                 `<div class="row"><span>Miesięcy w okresie</span><b>${months.length}</b></div>`;
+    if (!goal) {
+      el.innerHTML = `<div class="label">Oszczędności za cały okres</div><div class="big money">${zl(all.saved)}</div>${rate}`;
+      return;
+    }
+    const target = goal * months.length;
+    const p = Math.max(0, all.saved) / target * 100;
+    const hit = months.filter(m => byMonth[m].saved >= goal).length;
+    el.innerHTML = `<div class="label">Oszczędności za cały okres</div>
+      <div class="big money">${zl(all.saved)}</div>
+      <div class="of money">z ${zl(target)} · cel ${zl(goal)} × ${months.length} mies.</div>
+      <div class="track" role="img" aria-label="${Math.round(p)}% celu"><div class="fill" style="width:${Math.min(p, 100)}%"></div></div>
+      <div class="row"><span>Realizacja celu</span><b class="money">${Math.round(p)}%</b></div>
+      <div class="row"><span>Miesiące z osiągniętym celem</span><b>${hit} z ${months.length}</b></div>${rate}`;
+  }
+
+  function renderTop() {
+    const top = spendIn(state.month).filter(t => !fixed.has(t.c)).sort((a, b) => a.a - b.a).slice(0, 10);
+    $("topSub").textContent = `Jednorazowe wydatki ${scopeText()}, bez przelewów i kosztów stałych`;
+    $("topTable").innerHTML = !top.length ? `<tr><td class="empty">Brak wydatków dla wybranych filtrów.</td></tr>` :
+      `<tr><th>#</th><th>Data</th><th>Sklep</th><th>Kategoria</th><th class="num">Kwota</th></tr>` +
+      top.map((t, i) => `<tr><td class="muted">${i + 1}</td><td class="muted money">${fmtDate(t.d)}</td>
+        <td>${esc(t.m)}<div class="desc">${esc(t.s)}</div></td>
+        <td><span class="tag">${sw(t.c)}${esc(t.c)}</span></td><td class="num">${zlK(-t.a)}</td></tr>`).join("");
+  }
+
+  // ----- Графики: все месяцы; выбранный месяц обведён; клик по столбцу выбирает месяц -----
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const alpha = (hex, a) => {
+    const h = hex.replace("#", ""); const n = parseInt(h.length === 3 ? h.replace(/./g, "$&$&") : h, 16);
+    return `rgba(${n >> 16 & 255}, ${n >> 8 & 255}, ${n & 255}, ${a})`;
+  };
+  function renderCharts() {
+    if (typeof Chart === "undefined") {   // нет интернета → нет Chart.js; остальные блоки работают
+      document.querySelectorAll(".chart").forEach(el => el.innerHTML = `<div class="hint">Wykres wymaga połączenia z internetem (biblioteka Chart.js).</div>`);
+      return;
+    }
+    CHARTS.forEach(c => c.destroy()); CHARTS.length = 0;
+    const T = { text2: css("--text-2"), text: css("--text"), line: css("--line"), income: css("--income"),
+                expense: css("--expense"), savings: css("--savings"), bad: css("--bad"), badText: css("--bad-text"), gold: css("--gold") };
+    Chart.defaults.color = T.text2;
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.font.size = 14;
+    const selIdx = months.indexOf(state.month);           // -1 для «Cały okres»
+    const labels = months.map(m => cap(MONTHS_SHORT[mIdx(m)]));
+    const valueAxis = { grid: { color: T.line }, border: { display: false }, ticks: { callback: v => zlShort(v), maxTicksLimit: 6 } };
+    const catAxis = { grid: { display: false }, border: { color: T.line },
+      ticks: { color: ctx => ctx.index === selIdx ? T.text : T.text2, font: ctx => ({ weight: ctx.index === selIdx ? "700" : "400" }) } };
+    const border = { borderColor: months.map((_, i) => i === selIdx ? T.gold : "rgba(0,0,0,0)"), borderWidth: months.map((_, i) => i === selIdx ? 2.5 : 0) };
+    const pickMonth = (evt, els) => { if (els.length) setState({ month: months[els[0].index] }); };
+    const hoverCursor = (evt, els) => { evt.native.target.style.cursor = els.length ? "pointer" : "default"; };
+
+    // Oszczędności
+    const saved = months.map(m => byMonth[m].saved);
+    const colors = saved.map(v => v < 0 ? T.bad : (!goal || v >= goal) ? T.savings : alpha(T.savings, 0.35));
+    $("goalHint").hidden = !!goal;
+    $("savLegend").innerHTML = goal
+      ? `<span><i style="background:${T.savings}"></i>cel osiągnięty</span><span><i style="background:${alpha(T.savings, 0.35)}"></i>poniżej celu</span><span><i style="background:${T.bad}"></i>na minusie</span><span><i class="dash"></i>cel ${zl(goal)}</span>`
+      : `<span><i style="background:${T.savings}"></i>oszczędności</span><span><i style="background:${T.bad}"></i>na minusie</span>`;
+    const annotate = {
+      id: "annotate",
+      afterDatasetsDraw(chart) {
+        const { ctx, chartArea, scales: { x, y } } = chart;
+        ctx.save();
+        ctx.font = `600 12px ${Chart.defaults.font.family}`;
+        ctx.textAlign = "center";
+        saved.forEach((v, i) => {                      // подписи под отрицательными столбцами
+          if (v >= 0) return;
+          ctx.fillStyle = T.badText;
+          ctx.textBaseline = "top";
+          const label = zl(v), half = ctx.measureText(label).width / 2;   // не даём подписи вылезти за край
+          const cx = Math.min(Math.max(x.getPixelForValue(i), chartArea.left + half), chart.width - half - 2);
+          ctx.fillText(label, cx, y.getPixelForValue(v) + 4);
+        });
+        if (goal) {                                    // пунктир цели с подписью
+          const gy = y.getPixelForValue(goal);
+          ctx.strokeStyle = T.gold; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+          ctx.beginPath(); ctx.moveTo(chartArea.left, gy); ctx.lineTo(chartArea.right, gy); ctx.stroke();
+          ctx.setLineDash([]); ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillStyle = T.text; ctx.font = `italic 600 13px ${Chart.defaults.font.family}`;
+          ctx.fillText(`cel ${zl(goal)}`, chartArea.right, gy - 4);
+        }
+        ctx.restore();
+      },
+    };
+    const lo = Math.min(0, ...saved), hi = Math.max(goal || 0, ...saved);
+    CHARTS.push(new Chart($("savChart"), {
+      type: "bar",
+      data: { labels, datasets: [{ label: "Oszczędności", data: saved, backgroundColor: colors, borderRadius: 2, borderSkipped: false, barPercentage: 0.6, ...border }] },
+      options: { maintainAspectRatio: false, onClick: pickMonth, onHover: hoverCursor,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `Oszczędności: ${zl(c.parsed.y)}` + (goal ? ` (cel ${zl(goal)})` : "") } } },
+        scales: { y: { ...valueAxis, suggestedMin: lo * 1.2, suggestedMax: hi * 1.15 }, x: catAxis } },
+      plugins: [annotate],
+    }));
+
+    // Przychody i wydatki (wydatki — z filtrem kategorii)
+    const expLabel = state.cats.size ? `Wydatki · ${catsLabel()}` : "Wydatki";
+    $("mLegendExp").textContent = expLabel;
+    CHARTS.push(new Chart($("monthChart"), {
+      type: "bar",
+      data: { labels, datasets: [
+        { label: "Przychody", data: months.map(m => byMonth[m].income), backgroundColor: T.income, borderRadius: 2, barPercentage: 0.8, categoryPercentage: 0.7, ...border },
+        { label: expLabel, data: months.map(m => total(spendIn(m))), backgroundColor: T.expense, borderRadius: 2, barPercentage: 0.8, categoryPercentage: 0.7, ...border },
+      ] },
+      options: { maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, onClick: pickMonth, onHover: hoverCursor,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${zl(c.parsed.y)}` } } },
+        scales: { y: { ...valueAxis, beginAtZero: true }, x: catAxis } },
+    }));
+  }
+
+  const renderAll = () => { renderFilters(); renderHead(); renderCats(); renderShops(); renderCompare(); renderBudget(); renderTotal(); renderTop(); renderCharts(); };
+  renderAll();
+  if (!start.hooked) {
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => start.rerender && start.rerender());
+    addEventListener("hashchange", () => start.onHash && start.onHash());
+    start.hooked = true;
+  }
+  start.rerender = renderAll;
+  start.onHash = () => { readHash(); renderAll(); };
+}
+
+// ---------- Загрузка ----------
+async function fetchText(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+  return r.text();
+}
+
+function showPicker(reason) {
+  $("picker").hidden = false;
+  $("pickerWhy").textContent = reason;
+  const input = $("files"), drop = $("drop"), msg = $("pickerMsg");
+  const load = async fileList => {
+    const src = {};
+    for (const f of fileList) {
+      const text = await f.text();
+      const kind = kindOf(parseCSV(text).header);
+      if (kind) src[kind] = text;
+    }
+    const missing = ["statement", "rules"].filter(k => !(k in src)).map(k => FILES[k].split("/").pop());
+    if (missing.length) { msg.textContent = `Brakuje: ${missing.join(", ")}. Wybierz te pliki razem z pozostałymi.`; return; }
+    msg.textContent = "";
+    if (!("budget" in src)) src.budget = null;
+    start(src);
+  };
+  input.onchange = () => input.files.length && load(input.files);
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+  drop.ondragleave = () => drop.classList.remove("over");
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); load(e.dataTransfer.files); };
+}
+
+(async function boot() {
+  if (location.protocol === "file:") {
+    showPicker("Strona jest otwarta z dysku, a przeglądarka nie pozwala jej samodzielnie czytać plików z folderu data. Na stronie w internecie (GitHub Pages) dane wczytują się automatycznie.");
+    return;
+  }
+  try {
+    const [statement, rules] = await Promise.all([fetchText(FILES.statement), fetchText(FILES.rules)]);
+    let budget = null;
+    try { budget = await fetchText(FILES.budget); } catch (e) { /* бюджет необязателен */ }
+    start({ statement, rules, budget });
+  } catch (e) {
+    showPicker(`Nie udało się wczytać danych (${e.message}). Wybierz pliki ręcznie.`);
+  }
+})();
+</script>
+</body>
+</html>
